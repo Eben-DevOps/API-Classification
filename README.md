@@ -88,14 +88,8 @@ uvicorn main:app --reload
 - API endpoint: [http://127.0.0.1:8000/api/classify-number?number=371](http://127.0.0.1:8000/api/classify-number?number=371)
 - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-![Local Screenshot](./images/Screenshot%202025-02-02%20at%2019.19.24.png)
-![Local Screenshot](./images/Screenshot%202025-02-02%20at%2019.20.08.png)
-
 ## Remote Deployment using Docker
 
 - Root endpoint: [http://44.206.238.161:8000/](http://44.206.238.161:8000/)
 - API endpoint: [http://44.206.238.161:8000/api/classify-number?number=371](http://44.206.238.161:8000/api/classify-number?number=371)
-
-![Remote Screenshot](./images/r.png)
-![Remote Screenshot](./images/s.png)
 
