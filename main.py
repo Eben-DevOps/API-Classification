@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import requests
 from functools import lru_cache
+from typing import Union
 
 app = FastAPI(title="Number Classification API")
 
@@ -71,7 +72,7 @@ def is_perfect(n: int) -> bool:
         i += 1
     return divisors_sum == n
 
-def fetch_fun_fact(n: int) -> str:
+def fetch_fun_fact(n: Union[int, float]) -> str:
     try:
         response = requests.get(f"http://numbersapi.com/{n}/math?json", timeout=5)
         if response.status_code == 200:
@@ -89,30 +90,42 @@ async def classify_number(
     number: str = Query(..., description="The number to classify", example="371")
 ):
     try:
-        num = int(number)
+        # Try to convert the input to a float (handles integers and floating-point numbers)
+        num = float(number)
     except ValueError:
+        # If conversion fails, return a 400 error with the invalid input
         raise HTTPException(
             status_code=400,
-            detail={"number": number, "error": True}
+            detail={
+                "status": "error",
+                "message": "Invalid input. Please provide a valid number.",
+                "number": number
+            }
         )
-    
-    # Calculate properties in parallel (if needed) or sequentially for simplicity.
-    armstrong = is_armstrong(num)
-    prime = is_prime(num)
-    perfect = is_perfect(num)
-    digit_sum = calculate_digit_sum(num)
-    parity = "even" if num % 2 == 0 else "odd"
+
+    # Calculate properties
+    armstrong = is_armstrong(int(num)) if num.is_integer() else False
+    prime = is_prime(int(num)) if num.is_integer() else False
+    perfect = is_perfect(int(num)) if num.is_integer() else False
+    digit_sum = calculate_digit_sum(int(num)) if num.is_integer() else None
+    parity = "even" if num % 2 == 0 else "odd" if num.is_integer() else None
 
     properties = ["armstrong"] if armstrong else []
-    properties.append(parity)
+    if parity:
+        properties.append(parity)
 
     fun_fact = fetch_fun_fact(num)
 
-    return {
-        "number": num,
-        "is_prime": prime,
-        "is_perfect": perfect,
-        "properties": properties,
-        "digit_sum": digit_sum,
-        "fun_fact": fun_fact
-    }
+    return JSONResponse(
+        content={
+            "status": "success",
+            "message": "The input is valid.",
+            "number": num,
+            "is_prime": prime,
+            "is_perfect": perfect,
+            "properties": properties,
+            "digit_sum": digit_sum,
+            "fun_fact": fun_fact
+        },
+        status_code=200
+    )
