@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import requests
 
 app = FastAPI(title="Number Classification API")
@@ -16,17 +16,14 @@ app.add_middleware(
 )
 
 # Mount static directory for serving static files like favicon.ico.
-# Ensure you have created the 'static' folder and placed your favicon.ico inside.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Root endpoint with a welcome message.
 @app.get("/")
 async def read_root():
     return {
         "message": "Welcome to the Number Classification API! Use /api/classify-number?number=<number> to classify a number."
     }
 
-# Favicon endpoint to serve the favicon.ico file.
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse("static/favicon.ico")
@@ -72,8 +69,7 @@ def fetch_fun_fact(n: int) -> str:
         if response.status_code == 200:
             data = response.json()
             return data.get("text", "No fun fact available.")
-        else:
-            return "No fun fact available."
+        return "No fun fact available."
     except Exception:
         return "Error fetching fun fact."
 
@@ -82,9 +78,17 @@ async def classify_number(number: str = Query(..., description="The number to cl
     try:
         num = int(number)
     except ValueError:
-        raise HTTPException(
+        return JSONResponse(
             status_code=400,
-            detail={"number": number, "error": True}
+            content={
+                "number": number,  # Preserve invalid input
+                "is_prime": False,
+                "is_perfect": False,
+                "properties": [],
+                "digit_sum": None,
+                "fun_fact": "Invalid input. Please provide a valid integer.",
+                "error": True
+            }
         )
     
     armstrong = is_armstrong(num)
@@ -106,5 +110,6 @@ async def classify_number(number: str = Query(..., description="The number to cl
         "is_perfect": perfect,
         "properties": properties,
         "digit_sum": digit_sum,
-        "fun_fact": fun_fact
+        "fun_fact": fun_fact,
+        "error": False
     }
